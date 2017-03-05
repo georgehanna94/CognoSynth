@@ -71,13 +71,13 @@ public class MainActivity extends Activity {
 			IEE_DataChannel_t.IED_T8,IEE_DataChannel_t.IED_AF4, IEE_DataChannel_t.IED_F7, IEE_DataChannel_t.IED_F3, IEE_DataChannel_t.IED_FC5, IEE_DataChannel_t.IED_P7,
 			IEE_DataChannel_t.IED_O1, IEE_DataChannel_t.IED_O2, IEE_DataChannel_t.IED_P8, IEE_DataChannel_t.IED_FC6, IEE_DataChannel_t.IED_F4,IEE_DataChannel_t.IED_F8};
 	String[] Name_Channel = {"AF3","T7","Pz","T8","AF4", "F7", "F3", "FC5", "P7", "O1", "O2", "P8", "FC6", "F4", "F8"};
-	private double[] musicarray= {0,0,0,0,0};
+	private volatile double[] musicarray= {0,0,0,0,0};
 	private double[][] sample;
 	private Calendar c;
 	private TextView time;
 	private int moe = 1;
 	volatile Boolean stopped = false;
-	public Boolean brainworking, eye, brainworking_final = false, eye_final = false;
+	public volatile Boolean brainworking=false, eye=false, brainworking_final = false, eye_final = false;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -151,10 +151,8 @@ public class MainActivity extends Activity {
 							//Every ten loops do classification process
 							handler.sendEmptyMessage(3);
 						}
-
 						Thread.sleep(5);
 						loopcounter++;
-
 					}
 					
 					catch (Exception ex)
@@ -173,7 +171,7 @@ public class MainActivity extends Activity {
 		@Override
 		public Object call() throws Exception {
 			while(!stopped) {
-				generator.playsound(musicarray,brainworking,eye);
+				generator.playsound(musicarray,brainworking_final,eye_final);
 
 			}
 			return null;
@@ -219,12 +217,6 @@ public class MainActivity extends Activity {
 				break;
 
 			case 2:
-			    //Print date to system everytime you go to write to CSV
-				Calendar rightNow = Calendar.getInstance();
-
-				long offset = rightNow.get(Calendar.ZONE_OFFSET)+rightNow.get(Calendar.DST_OFFSET);
-				long sinceMidnight = (rightNow.getTimeInMillis()+offset)%(24*60*60*1000);
-				//System.out.println(sinceMidnight);
 
 				int count1=0,count2=0,count3=0,count4 =0;
 
@@ -233,9 +225,10 @@ public class MainActivity extends Activity {
 					double[] data = IEdk.IEE_GetAverageBandPowers(Channel_list[i]);
 
 					//Pass first set of values to put music generator
-					if(i==0){
+					if(i==0&&data.length==5){
 						for(int k=0; k< data.length;k++) {
 							musicarray[k] = data[k];
+							System.out.println(musicarray[k]);
 						}
 					}
 

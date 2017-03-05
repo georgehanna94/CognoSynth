@@ -4,6 +4,8 @@ import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
 
+import java.util.Arrays;
+
 /**
  * Created by George on 2017-03-04.
  * Made infinitely better by Erik later that same day.
@@ -63,13 +65,16 @@ public class audiogenerator {
         System.arraycopy(scaling_new, 0, scaling_old, 0, scaling_new.length); // copy new into old
         if (!eyes && !work) {
           silent_arb++;
-          if (silent_arb > 3)
-            scaling_new = Arrays.fill(scaling_new, 0.0);
+          if (silent_arb > 3){
+              for (int k = 0; k<5;k++){
+                  scaling_new[k] = 0.0;
+              }
+          }
         } else if (eyes) {
-          System.arraycopy(input, 0, scaling_new, 0, scaling_new.length) // read in new amplitude scaling
+          System.arraycopy(input, 0, scaling_new, 0, scaling_new.length); // read in new amplitude scaling
           silent_arb = 0;
         } else if (call_count%5 == 5) {
-          System.arraycopy(input, 0, scaling_new, 0, scaling_new.length) // read in new amplitude scaling
+          System.arraycopy(input, 0, scaling_new, 0, scaling_new.length) ;// read in new amplitude scaling
           silent_arb = 0;
         }
         // BEGINNING OF DUMMY BLOCK
