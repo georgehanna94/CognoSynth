@@ -62,7 +62,7 @@ public class MainActivity extends Activity {
 	private Calendar c;
 	private TextView time;
 	private int moe = 1;
-	volatile Boolean stopped = true;
+	volatile Boolean stopped = false;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -78,24 +78,21 @@ public class MainActivity extends Activity {
 		mBluetoothAdapter = bluetoothManager.getAdapter();
 		c = Calendar.getInstance();
 
+		/***************************************************/
 		//Request Permissions for bluetooth access
 		if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 			/***Android 6.0 and higher need to request permission*****/
 			if (ContextCompat.checkSelfPermission(this,
 					Manifest.permission.ACCESS_FINE_LOCATION)
 					!= PackageManager.PERMISSION_GRANTED) {
-
 				ActivityCompat.requestPermissions(this,
 						new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
 						MY_PERMISSIONS_REQUEST_BLUETOOTH);
 			}
-			else{
-				checkConnect();
-			}
-		}
-		else {
-			checkConnect();
-		}
+			else{	checkConnect();		}
+		}else {	checkConnect();		}
+		/***************************************************/
+
 
 		Start_button = (Button)findViewById(R.id.startbutton);
 		Stop_button  = (Button)findViewById(R.id.stopbutton);
@@ -106,10 +103,10 @@ public class MainActivity extends Activity {
 			public void onClick(View arg0) {
 				// TODO Auto-generated method stub
 				Log.e("FFTSample","Start Write File");
-				//setDataFile();
+				setDataFile();
 				service.submit(new DataCollection());
 				service.submit(new Tone());
-				//isEnableWriteFile = true;
+				isEnableWriteFile = true;
 			}
 		});
 		Stop_button.setOnClickListener(new OnClickListener() {
@@ -118,9 +115,9 @@ public class MainActivity extends Activity {
 			public void onClick(View arg0) {
 				// TODO Auto-generated method stub
 				Log.e("FFTSample","Stop Write File");
-				//StopWriteFile();
-				stopped = false;
-				//isEnableWriteFile = false;
+				StopWriteFile();
+				stopped = true;
+				isEnableWriteFile = false;
 			}
 		});
 
@@ -151,7 +148,7 @@ public class MainActivity extends Activity {
 				}
 			}
 		};
-		//processingThread.start();
+		//processingThread.start();*/
 
 	}
 
@@ -159,10 +156,7 @@ public class MainActivity extends Activity {
 
 		@Override
 		public Object call() throws Exception {
-			for (int index = 0; index<1000; index++){
-				Thread.sleep(5);
-				System.out.println(index);
-			}
+			processingThread.start();
 			return null;
 		}
 	}
@@ -228,28 +222,17 @@ public class MainActivity extends Activity {
 						try {
 							motion_writer.write(Name_Channel[i] + ",");
 							for(int j=0; j < data.length;j++) {
-								//if (j<data.length) {
-									addData(data[j]);
-							//	}//else {
-									//addData(seconds);
-								//}
+								addData(data[j]);
+
 							}
 							addData(sinceMidnight);
 							motion_writer.newLine();
 						} catch (IOException e) {
-							// TODO Auto-generated catch block
+						//	// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
 					}
 				}
-				case 3:
-					if (moe == 0) {
-						time.setText("yo");
-						moe = 1;
-					}else{
-						time.setText("dawg");
-						moe = 0;
-					}
 
 				break;
 			}
@@ -356,13 +339,6 @@ public class MainActivity extends Activity {
 			//Connect to emoEngine
 			IEdk.IEE_EngineConnect(this,"");
 		}
-	}
-
-
-	private void playSound(double frequency, int duration) {
-
-
-
 	}
 
 

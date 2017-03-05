@@ -10,7 +10,14 @@ import android.media.AudioTrack;
 
 public class audiogenerator {
     public audiogenerator(){
-        /* Defined variables */
+
+
+    }
+
+
+
+    public void playsound() {
+    /* Defined variables */
         int fundHz = 220;
         int fade_len = 4000;
         int fade_start = 0;
@@ -34,15 +41,8 @@ public class audiogenerator {
         double[] scaling_old = {.1, .1, .5, .75, 1};
         boolean test = false;
         int count = 0;
-
-    }
-
-
-
-    public void playsound() {
-
     /* Constant loop */
-        while(stopped) {
+        for(int tracker =0 ; tracker<100; tracker ++) {
 
                     /* Read in the data from other thread */
             //good = true; // consonance switch
