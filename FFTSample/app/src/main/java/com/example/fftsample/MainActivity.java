@@ -69,6 +69,7 @@ public class MainActivity extends Activity {
 			IEE_DataChannel_t.IED_T8,IEE_DataChannel_t.IED_AF4, IEE_DataChannel_t.IED_F7, IEE_DataChannel_t.IED_F3, IEE_DataChannel_t.IED_FC5, IEE_DataChannel_t.IED_P7,
 			IEE_DataChannel_t.IED_O1, IEE_DataChannel_t.IED_O2, IEE_DataChannel_t.IED_P8, IEE_DataChannel_t.IED_FC6, IEE_DataChannel_t.IED_F4,IEE_DataChannel_t.IED_F8};
 	String[] Name_Channel = {"AF3","T7","Pz","T8","AF4", "F7", "F3", "FC5", "P7", "O1", "O2", "P8", "FC6", "F4", "F8"};
+	private double[] musicarray= {0,0,0,0,0};
 	private Calendar c;
 	private TextView time;
 	private int moe = 1;
@@ -236,6 +237,15 @@ public class MainActivity extends Activity {
 				for(int i=0; i < Channel_list.length; i++)
 				{
 					double[] data = IEdk.IEE_GetAverageBandPowers(Channel_list[i]);
+
+					//Pass first set of values to put creator
+					if(i==0){
+						for(int k=0; k< data.length;k++) {
+							musicarray[k] = data[k];
+
+						}
+					}
+					
 					if(data.length == 5){
 						try {
 							//motion_writer.write(Name_Channel[i] + ",");
