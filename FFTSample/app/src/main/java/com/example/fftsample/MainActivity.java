@@ -37,14 +37,22 @@ import android.bluetooth.BluetoothManager;
 import android.content.Context;
 import android.content.Intent;
 
+import weka.classifiers.Classifier;
+import weka.core.converters.ArffSaver;
+import weka.core.Instances;
+import weka.classifiers.trees.J48;
+import weka.classifiers.Evaluation;
+import weka.core.converters.CSVLoader;
+
 import com.emotiv.insight.IEdk;
 import com.emotiv.insight.IEdkErrorCode;
 import com.emotiv.insight.IEdk.IEE_DataChannel_t;
 import com.emotiv.insight.IEdk.IEE_Event_t;;
 
 public class MainActivity extends Activity {
-
 	audiogenerator generator = new audiogenerator();
+	CSV2Arff csv2arff = new CSV2Arff();
+
 	private Thread processingThread;
 	private static final int REQUEST_ENABLE_BT = 1;
 	private static final int MY_PERMISSIONS_REQUEST_BLUETOOTH = 0;
@@ -72,6 +80,12 @@ public class MainActivity extends Activity {
 		//Create a Threadpool manager
 		final ExecutorService service = Executors.newFixedThreadPool(2);
 
+		//Deserlializing a model
+		try{
+			Classifier cls = (Classifier) weka.core.SerializationHelper.read("/some/where/j48.model");
+		}catch (Exception ioe) {
+			ioe.printStackTrace();
+		}
 		//Create Bluetooth Manager
 		final BluetoothManager bluetoothManager =
 				(BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
@@ -105,7 +119,6 @@ public class MainActivity extends Activity {
 				Log.e("FFTSample","Start Write File");
 				setDataFile();
 				stopped = false;
-				service.submit(new DataCollection());
 				service.submit(new Tone());
 				isEnableWriteFile = true;
 			}
@@ -128,18 +141,31 @@ public class MainActivity extends Activity {
 			public void run() {
 				// TODO Auto-generated method stub
 				//System.out.println(c.get(Calendar.MILLISECOND));
-
 				super.run();
-				while(true)
+				int loopcounter = 1;
+				while(!stopped)
 				{
 					try
 					{
+						//Get Next Event from Headset
 						handler.sendEmptyMessage(0);
+						//Double Check Device Still connected
 						handler.sendEmptyMessage(1);
+						//Get data into CSV file
 						if(isEnablGetData && isEnableWriteFile)handler.sendEmptyMessage(2);
-						//handler.sendEmptyMessage(3);
+						if(loopcounter%10==0) {
+							//Every ten loops do classification process
+							handler.sendEmptyMessage(3);
+							//Close file
+							StopWriteFile();
+							//Start new one
+							setDataFile();
+
+						}
 
 						Thread.sleep(5);
+						loopcounter++;
+
 					}
 					
 					catch (Exception ex)
@@ -149,17 +175,8 @@ public class MainActivity extends Activity {
 				}
 			}
 		};
-		//processingThread.start();*/
+		processingThread.start();
 
-	}
-
-	public class DataCollection implements Callable<Object>{
-
-		@Override
-		public Object call() throws Exception {
-			//processingThread.start();
-			return null;
-		}
 	}
 
 	public class Tone implements Callable<Object>{
@@ -168,6 +185,7 @@ public class MainActivity extends Activity {
 		public Object call() throws Exception {
 			while(!stopped) {
 				generator.playsound();
+
 			}
 			return null;
 		}
@@ -223,7 +241,7 @@ public class MainActivity extends Activity {
 					double[] data = IEdk.IEE_GetAverageBandPowers(Channel_list[i]);
 					if(data.length == 5){
 						try {
-							motion_writer.write(Name_Channel[i] + ",");
+							//motion_writer.write(Name_Channel[i] + ",");
 							for(int j=0; j < data.length;j++) {
 								addData(data[j]);
 
@@ -236,6 +254,11 @@ public class MainActivity extends Activity {
 						}
 					}
 				}
+
+			case 3:
+				//Read CSV File and convert ARFF
+
+				//Call classifier function and return decision + new random array
 
 				break;
 			}
@@ -282,7 +305,6 @@ public class MainActivity extends Activity {
 	}
 
 
-
 	private void setDataFile() {
 		try {
 			String eeg_header = "Channel , Theta ,Alpha ,Low beta ,High beta , Gamma , Time";
@@ -293,7 +315,7 @@ public class MainActivity extends Activity {
 			{
 				folder.mkdirs();
 			}		
-			motion_writer = new BufferedWriter(new FileWriter(file_path+"bandpowerValue.csv"));
+			motion_writer = new BufferedWriter(new FileWriter(file_path+"bandpowerValue.csv",false));
 			motion_writer.write(eeg_header);
 			motion_writer.newLine();
 		} catch (Exception e) {
