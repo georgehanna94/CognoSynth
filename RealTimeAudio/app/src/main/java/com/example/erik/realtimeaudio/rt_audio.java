@@ -14,8 +14,7 @@ public class rt_audio extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_rt_audio);
-
-        boolean audio_running = false;
+        
         final Button button = (Button) findViewById(R.id.button);
         button.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -41,6 +40,7 @@ public class rt_audio extends AppCompatActivity {
                 int scale_len = 5;
                 double[] scaling_new = {1,.75,.5,.1,.1};
                 double[] scaling_old = {.1,.1,.5,.75,1};
+
                 boolean test = false;
                 int count = 0;
 
@@ -112,8 +112,13 @@ public class rt_audio extends AppCompatActivity {
                             sum = -1.0;
 
                         /* Save the sample values to play */
-                        samples[i + 0] = (short) (sum * 32000);
-                        samples[i + 1] = (short) (sum * 32000);
+                        if (good) {
+                            samples[i    ] = (short) (sum * 20000);
+                            samples[i + 1] = (short) (sum * 20000);
+                        } else {
+                            samples[i    ] = (short) (sum * 32000);
+                            samples[i + 1] = (short) (sum * 32000);
+                        }
 
                         /* Increment the generation variable */
                         delta++;
