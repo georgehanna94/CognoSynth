@@ -104,6 +104,7 @@ public class MainActivity extends Activity {
 				// TODO Auto-generated method stub
 				Log.e("FFTSample","Start Write File");
 				setDataFile();
+				stopped = false;
 				service.submit(new DataCollection());
 				service.submit(new Tone());
 				isEnableWriteFile = true;
@@ -156,7 +157,7 @@ public class MainActivity extends Activity {
 
 		@Override
 		public Object call() throws Exception {
-			processingThread.start();
+			//processingThread.start();
 			return null;
 		}
 	}
@@ -165,7 +166,9 @@ public class MainActivity extends Activity {
 
 		@Override
 		public Object call() throws Exception {
-			generator.playsound();
+			while(!stopped) {
+				generator.playsound();
+			}
 			return null;
 		}
 	}
