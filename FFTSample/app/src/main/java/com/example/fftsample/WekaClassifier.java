@@ -1,3 +1,5 @@
+package com.example.fftsample;
+
 // Generated with Weka 3.8.1
 //
 // This code is public domain and comes with no warranty.

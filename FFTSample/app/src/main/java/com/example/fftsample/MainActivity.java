@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.DateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.concurrent.Callable;
@@ -54,6 +55,7 @@ import com.github.ybq.android.spinkit.SpinKitView;;
 
 public class MainActivity extends Activity {
 	audiogenerator generator = new audiogenerator();
+	WekaClassifier classifier = new WekaClassifier();
 
 	private Thread processingThread;
 	private static final int REQUEST_ENABLE_BT = 1;
@@ -70,10 +72,12 @@ public class MainActivity extends Activity {
 			IEE_DataChannel_t.IED_O1, IEE_DataChannel_t.IED_O2, IEE_DataChannel_t.IED_P8, IEE_DataChannel_t.IED_FC6, IEE_DataChannel_t.IED_F4,IEE_DataChannel_t.IED_F8};
 	String[] Name_Channel = {"AF3","T7","Pz","T8","AF4", "F7", "F3", "FC5", "P7", "O1", "O2", "P8", "FC6", "F4", "F8"};
 	private double[] musicarray= {0,0,0,0,0};
+	private double[][] sample;
 	private Calendar c;
 	private TextView time;
 	private int moe = 1;
 	volatile Boolean stopped = false;
+	public Boolean brainworking, eye, brainworking_final = false, eye_final = false;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -86,13 +90,7 @@ public class MainActivity extends Activity {
 		//Create a Threadpool manager
 		final ExecutorService service = Executors.newFixedThreadPool(2);
 
-		//Deserlializing a model
-		try{
-			Classifier cls = (Classifier) weka.core.SerializationHelper.read("/some/where/j48.model");
-		}catch (Exception ioe) {
-			ioe.printStackTrace();
-		}
-		//Create Bluetooth Manager
+	   //Create Bluetooth Manager
 		final BluetoothManager bluetoothManager =
 				(BluetoothManager) getSystemService(Context.BLUETOOTH_SERVICE);
 		mBluetoothAdapter = bluetoothManager.getAdapter();
@@ -118,14 +116,12 @@ public class MainActivity extends Activity {
 				if(isChecked){
 					Log.e("FFTSample","Start Write File");
 					spinner.setVisibility(View.VISIBLE);
-					setDataFile();
 					stopped = false;
 					service.submit(new Tone());
 					isEnableWriteFile = true;
 				}else{
 					Log.e("FFTSample","Stop Write File");
 					spinner.setVisibility(View.GONE);
-					StopWriteFile();
 					stopped = true;
 					isEnableWriteFile = false;
 				}
@@ -151,14 +147,9 @@ public class MainActivity extends Activity {
 						handler.sendEmptyMessage(1);
 						//Get data into CSV file
 						if(isEnablGetData && isEnableWriteFile)handler.sendEmptyMessage(2);
-						if(loopcounter%10==0) {
+						if(loopcounter%200==0) {
 							//Every ten loops do classification process
 							handler.sendEmptyMessage(3);
-							//Close file
-							StopWriteFile();
-							//Start new one
-							setDataFile();
-
 						}
 
 						Thread.sleep(5);
@@ -182,7 +173,7 @@ public class MainActivity extends Activity {
 		@Override
 		public Object call() throws Exception {
 			while(!stopped) {
-				generator.playsound();
+				generator.playsound(musicarray,brainworking,eye);
 
 			}
 			return null;
@@ -212,6 +203,7 @@ public class MainActivity extends Activity {
 				}
 				
 				break;
+
 			case 1:
 
 				/*Connect device with Epoc Plus headset*/
@@ -225,48 +217,67 @@ public class MainActivity extends Activity {
 
 				else lock = false;
 				break;
+
 			case 2:
 			    //Print date to system everytime you go to write to CSV
 				Calendar rightNow = Calendar.getInstance();
 
 				long offset = rightNow.get(Calendar.ZONE_OFFSET)+rightNow.get(Calendar.DST_OFFSET);
 				long sinceMidnight = (rightNow.getTimeInMillis()+offset)%(24*60*60*1000);
-				System.out.println(sinceMidnight);
+				//System.out.println(sinceMidnight);
 
-                if(motion_writer == null) return;
+				int count1=0,count2=0,count3=0,count4 =0;
+
 				for(int i=0; i < Channel_list.length; i++)
 				{
 					double[] data = IEdk.IEE_GetAverageBandPowers(Channel_list[i]);
 
-					//Pass first set of values to put creator
+					//Pass first set of values to put music generator
 					if(i==0){
 						for(int k=0; k< data.length;k++) {
 							musicarray[k] = data[k];
-
 						}
 					}
-					
+
 					if(data.length == 5){
-						try {
-							//motion_writer.write(Name_Channel[i] + ",");
-							for(int j=0; j < data.length;j++) {
-								addData(data[j]);
-
+						try{
+							double result = classifier.classify(data);
+							if (result == 0){
+								count1++;
+							}else if (result ==1){
+								count2++;
+							}else if (result ==2){
+								count3++;
+							}else if(result ==3){
+								count4++;
 							}
-							addData(sinceMidnight);
-							motion_writer.newLine();
-						} catch (IOException e) {
-						//	// TODO Auto-generated catch block
-							e.printStackTrace();
+
+						} catch (Exception e) {
+							Log.e("","Exception"+ e.getMessage());
 						}
+
 					}
+				}
+				int max = Math.max(Math.max(Math.max(count1,count2),count3),count4);
+				if(count1==max){
+					brainworking = false;
+					eye = false;
+				}else if(count2 ==max){
+					brainworking = false;
+					eye = true;
+				}else if(count3 == max){
+					brainworking = true;
+					eye = false;
+				}else if(count4 ==max){
+					brainworking = true;
+					eye = true;
 				}
 
 			case 3:
-				//Read CSV File and convert ARFF
-
-				//Call classifier function and return decision + new random array
-
+				brainworking_final = brainworking;
+				System.out.println("Brain working final is" + brainworking_final);
+				eye_final = eye;
+				System.out.println("Eye final is" + eye_final);
 				break;
 			}
 
@@ -311,54 +322,6 @@ public class MainActivity extends Activity {
 		}
 	}
 
-
-	private void setDataFile() {
-		try {
-			String eeg_header = "Channel , Theta ,Alpha ,Low beta ,High beta , Gamma , Time";
-			File root = Environment.getExternalStorageDirectory();
-			String file_path = root.getAbsolutePath()+ "/FFTSample/";
-			File folder=new File(file_path);
-			if(!folder.exists())
-			{
-				folder.mkdirs();
-			}		
-			motion_writer = new BufferedWriter(new FileWriter(file_path+"bandpowerValue.csv",false));
-			motion_writer.write(eeg_header);
-			motion_writer.newLine();
-		} catch (Exception e) {
-			Log.e("","Exception"+ e.getMessage());
-		}
-	}
-	private void StopWriteFile(){
-		try {
-			motion_writer.flush();
-			motion_writer.close();
-			motion_writer = null;
-		} catch (Exception e) {
-			// TODO: handle exception
-		}
-	}
-	/**
-	 * public void addEEGData(Double[][] eegs) Add EEG Data for write int the
-	 * EEG File
-	 * 
-	 * @param
-	 *            - double array of eeg data
-	 */
-	public void addData(double data) {
-
-		if (motion_writer == null) {
-			return;
-		}
-			String input = "";
-				input += (String.valueOf(data) + ",");
-			try {
-				motion_writer.write(input);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-	}
 
 	private void checkConnect(){
 		if (!mBluetoothAdapter.isEnabled()) {
