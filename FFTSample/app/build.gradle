@@ -22,4 +22,5 @@ dependencies {
     compile 'com.android.support:support-v4:23.0.1'
     compile 'com.emotiv.sdk:community:3.3.+@aar'
     compile files('libs/wekaSTRIPPED.jar')
+    compile 'com.github.ybq:Android-SpinKit:1.1.0'
 }
