@@ -25,11 +25,14 @@ public class audiogenerator {
     private AudioTrack track; // the audiotrack used to play audio
     private short[] samples; // the samples to play (size of min_buf)
     private int delta = 0; // variable used to track the current phase position
+    private int call_count = 0; // variable counting number of calls
+    private int silent_arb = 0; // variable to arbitrate silence (avoid too much silence)
 
     /* Sound shaping variables (could be volatile to communicate with the generator?) */
-    public boolean good = true;
-    public double[] scaling_new = {1, 0.75, 0.5, 0.1, 0.1}; // new amplitude scaling values
-    public double[] scaling_old = {0.1, 0.1, 0.5, 0.75, 1}; // old amplitude scaling values
+    private boolean work = true;
+    private boolean eyes = true;
+    private double[] scaling_new = {1, 0.75, 0.5, 0.1, 0.1}; // new amplitude scaling values
+    private double[] scaling_old = {0.1, 0.1, 0.5, 0.75, 1}; // old amplitude scaling values
 
     /* Variables to be removed in actual implementation */
     private int count = 0;
@@ -42,43 +45,64 @@ public class audiogenerator {
         this.samples = new short[min_buf];
     }
 
-    public void playsound() {
+    /*
+     * input: is the raw frequency bins from one electrode
+     * work_in: true for subject working
+     * eyes_in: true for eyes open
+     *
+     * eyes closed and not working: silence
+     * eyes closed and working: slow, dissonant
+     * eyes open and not working: rapid, dissonant
+     * eyes open and working: rapid, consonant
+     */
+    public void playsound(double[] input, boolean work_in, boolean eyes_in) {
         /* Constant loop */
         /* Read in the data from other thread */
-        //good = true; // consonance switch
+        work = work_in; // consonance switch
+        eyes = eyes_in; // tempo switch
         System.arraycopy(scaling_new, 0, scaling_old, 0, scaling_new.length); // copy new into old
-        // read in new amplitude scaling
-        // BEGINNING OF DUMMY BLOCK
-        if (good) {
-            if (count == 0 || count == 10 || count == 20) {
-                for (int k = 0; k < 5; k++) {
-                    scaling_new[k] = Math.abs(Math.random());
-                }
-            }
-            count++;
-            if (count > 30) {
-                count = 0;
-                good = false;
-            }
-        } else {
-            if (count == 0 || count == 10 || count == 20) {
-                for (int k = 0; k < 5; k++) {
-                    scaling_new[k] = Math.abs(Math.random());
-                }
-            }
-            count++;
-            if (count > 30) {
-                count = 0;
-                good = true;
-            }
+        if (!eyes && !work) {
+          silent_arb++;
+          if (silent_arb > 3)
+            scaling_new = Arrays.fill(scaling_new, 0.0);
+        } else if (eyes) {
+          System.arraycopy(input, 0, scaling_new, 0, scaling_new.length) // read in new amplitude scaling
+          silent_arb = 0;
+        } else if (call_count%5 == 5) {
+          System.arraycopy(input, 0, scaling_new, 0, scaling_new.length) // read in new amplitude scaling
+          silent_arb = 0;
         }
+        // BEGINNING OF DUMMY BLOCK
+        // if (work) {
+        //     if (count == 0 || count == 10 || count == 20) {
+        //         for (int k = 0; k < 5; k++) {
+        //             scaling_new[k] = Math.abs(Math.random());
+        //         }
+        //     }
+        //     count++;
+        //     if (count > 30) {
+        //         count = 0;
+        //         work = false;
+        //     }
+        // } else {
+        //     if (count == 0 || count == 10 || count == 20) {
+        //         for (int k = 0; k < 5; k++) {
+        //             scaling_new[k] = Math.abs(Math.random());
+        //         }
+        //     }
+        //     count++;
+        //     if (count > 30) {
+        //         count = 0;
+        //         work = true;
+        //     }
+        // }
         // END OF DUMMY BLOCK
 
         /* Compute values to play */
         this.fade_start = this.delta; // begin amplitude fade through
         for (int i = 0; i < this.min_buf; i += 2) {
             double sum = 0.0; // value to save as a sample
-            if (this.good) {
+            if (this.work) {
                 double[] pts = new double[cons_len];
                 for (int j = 0; j < this.cons_len; j++) {
                     pts[j] = this.delta / ((float) 44100 / (this.fundHz * RelConsf[j])) * 2.0 * Math.PI;
@@ -120,6 +144,9 @@ public class audiogenerator {
         /* Begin playing the values */
         this.track.write(this.samples, 0, this.min_buf);
         this.track.play();
+
+        /* Count the number of calls this function has received */
+        call_count++;
     }
 
 }
