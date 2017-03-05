@@ -21,6 +21,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v4.app.ActivityCompat;
 import android.content.pm.PackageManager;
 import android.Manifest;
+import android.widget.CompoundButton;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.os.Bundle;
@@ -36,6 +37,7 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothManager;
 import android.content.Context;
 import android.content.Intent;
+import android.widget.ToggleButton;
 
 import weka.classifiers.Classifier;
 import weka.core.converters.ArffSaver;
@@ -47,11 +49,11 @@ import weka.core.converters.CSVLoader;
 import com.emotiv.insight.IEdk;
 import com.emotiv.insight.IEdkErrorCode;
 import com.emotiv.insight.IEdk.IEE_DataChannel_t;
-import com.emotiv.insight.IEdk.IEE_Event_t;;
+import com.emotiv.insight.IEdk.IEE_Event_t;
+import com.github.ybq.android.spinkit.SpinKitView;;
 
 public class MainActivity extends Activity {
 	audiogenerator generator = new audiogenerator();
-	CSV2Arff csv2arff = new CSV2Arff();
 
 	private Thread processingThread;
 	private static final int REQUEST_ENABLE_BT = 1;
@@ -76,6 +78,9 @@ public class MainActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+
+		final ToggleButton toggle = (ToggleButton)findViewById(R.id.toggleButton);
+		final SpinKitView spinner =  (SpinKitView)findViewById(R.id.spin_kit);
 
 		//Create a Threadpool manager
 		final ExecutorService service = Executors.newFixedThreadPool(2);
@@ -107,33 +112,25 @@ public class MainActivity extends Activity {
 		}else {	checkConnect();		}
 		/***************************************************/
 
+		toggle.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener(){
+			public void onCheckedChanged(CompoundButton buttonView, boolean isChecked){
+				if(isChecked){
+					Log.e("FFTSample","Start Write File");
+					spinner.setVisibility(View.VISIBLE);
+					setDataFile();
+					stopped = false;
+					service.submit(new Tone());
+					isEnableWriteFile = true;
+				}else{
+					Log.e("FFTSample","Stop Write File");
+					spinner.setVisibility(View.GONE);
+					StopWriteFile();
+					stopped = true;
+					isEnableWriteFile = false;
+				}
+			}
+		});
 
-		Start_button = (Button)findViewById(R.id.startbutton);
-		Stop_button  = (Button)findViewById(R.id.stopbutton);
-		
-		Start_button.setOnClickListener(new OnClickListener() {
-			
-			@Override
-			public void onClick(View arg0) {
-				// TODO Auto-generated method stub
-				Log.e("FFTSample","Start Write File");
-				setDataFile();
-				stopped = false;
-				service.submit(new Tone());
-				isEnableWriteFile = true;
-			}
-		});
-		Stop_button.setOnClickListener(new OnClickListener() {
-			
-			@Override
-			public void onClick(View arg0) {
-				// TODO Auto-generated method stub
-				Log.e("FFTSample","Stop Write File");
-				StopWriteFile();
-				stopped = true;
-				isEnableWriteFile = false;
-			}
-		});
 
 		processingThread=new Thread()
 		{
