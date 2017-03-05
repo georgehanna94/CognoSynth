@@ -9,60 +9,35 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context=".MainActivity" >
 
-    <LinearLayout
-        android:id="@+id/firstguy"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:weightSum="1">
-
-        <Button
-            android:id="@+id/startbutton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentTop="true"
-            android:layout_centerHorizontal="true"
-            android:layout_marginRight="10dp"
-            android:layout_weight="0.5"
-            android:text="Start Write File" />
-
-        <Button
-            android:id="@+id/stopbutton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="right"
-            android:layout_weight="0.5"
-            android:text="Stop Write File" />
-
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/time"
+    <ToggleButton
+        android:id="@+id/toggleButton"
+        style="@style/AppBaseTheme"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_below="@+id/firstguy"
-        android:layout_marginBottom="50dp"
+        android:layout_centerHorizontal="true"
         android:layout_marginTop="50dp"
-        android:orientation="horizontal">
+        android:layout_weight="0.5"
+        android:background="@android:drawable/ic_media_play"
+        android:scaleX="1.1"
+        android:scaleY="1.1"
+        android:text="ToggleButton"
+        android:textColor="@android:color/background_light"
+        android:textOff="STOPPED"
+        android:textOn="COMPOSING"
+        android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/textView"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="TextView" />
-    </LinearLayout>
-
-    <com.github.ybq.android.spinkit.SpinKitView
-        xmlns:app="http://schemas.android.com/apk/res-auto"
+    <com.github.ybq.android.spinkit.SpinKitView xmlns:app="http://schemas.android.com/apk/res-auto"
         android:id="@+id/spin_kit"
         style="@style/SpinKitView.Large.Wave"
         android:layout_width="368dp"
         android:layout_height="200dp"
-        android:layout_gravity="center"
-        tools:layout_editor_absoluteY="155dp"
-        tools:layout_editor_absoluteX="8dp"
+        android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
-        android:layout_centerHorizontal="true"/>
+        android:layout_gravity="center"
+        android:visibility="invisible"
+        app:SpinKit_Color="@android:color/holo_red_dark"
+        tools:layout_editor_absoluteX="8dp"
+        tools:layout_editor_absoluteY="155dp" />
 
 </RelativeLayout>

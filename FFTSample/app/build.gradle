@@ -19,8 +19,11 @@ android {
 }
 
 dependencies {
+    compile files('libs/wekaSTRIPPED.jar')
+    //compile 'net.colindodd:toggleimagebutton:1.2'
     compile 'com.android.support:support-v4:23.0.1'
     compile 'com.emotiv.sdk:community:3.3.+@aar'
-    compile files('libs/wekaSTRIPPED.jar')
     compile 'com.github.ybq:Android-SpinKit:1.1.0'
+    compile 'com.android.support:appcompat-v7:23.4.0'
+    compile 'com.android.support.constraint:constraint-layout:+'
 }
